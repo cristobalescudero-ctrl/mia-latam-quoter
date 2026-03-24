@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>MIA–LATAM Airfreight Quoter</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f5f7; color: #1a1a2e; min-height: 100vh; padding: 2rem 1rem; }
+  .container { max-width: 720px; margin: 0 auto; }
+  header { margin-bottom: 1.5rem; }
+  .logo-row { display: flex; align-items: center; gap: 10px; margin-bottom: 0.4rem; }
+  .logo-box { background: #003366; color: #fff; font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 4px; letter-spacing: 0.05em; }
+  h1 { font-size: 22px; font-weight: 600; color: #003366; }
+  .subtitle { font-size: 13px; color: #666; margin-top: 2px; }
+  .card { background: #fff; border-radius: 10px; border: 1px solid #e0e3e8; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+  .section-label { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.85rem; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  label { font-size: 12px; color: #555; display: block; margin-bottom: 4px; font-weight: 500; }
+  select, input[type=number], input[type=text], input[type=date] {
+    width: 100%; padding: 8px 10px; border: 1px solid #d0d5dd; border-radius: 6px;
+    font-size: 13px; color: #1a1a2e; background: #fff; outline: none;
+    transition: border-color 0.15s;
+  }
+  select:focus, input:focus { border-color: #003366; }
+  .result-row { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+  .result-row:last-child { border-bottom: none; }
+  .rl { color: #666; }
+  .rv { font-weight: 600; color: #1a1a2e; }
+  .total-row { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 14px; border-top: 2px solid #003366; }
+  .total-label { font-size: 15px; font-weight: 600; color: #003366; }
+  .total-val { font-size: 26px; font-weight: 700; color: #003366; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; margin-left: 8px; vertical-align: middle; }
+  .badge-ok { background: #d1fae5; color: #065f46; }
+  .badge-warn { background: #fef3c7; color: #92400e; }
+  .badge-bad { background: #fee2e2; color: #991b1b; }
+  .meta-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 14px; }
+  .meta-item { background: #f8f9fb; border-radius: 6px; padding: 8px 10px; }
+  .meta-lbl { font-size: 11px; color: #888; margin-bottom: 2px; }
+  .meta-val { font-size: 14px; font-weight: 600; color: #1a1a2e; }
+  .note-box { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; padding: 8px 12px; font-size: 12px; color: #78350f; margin-top: 12px; line-height: 1.5; }
+  .tag { display: inline-block; font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 4px; margin-left: 5px; vertical-align: middle; }
+  .tag-pax { background: #dbeafe; color: #1e40af; }
+  .tag-cao { background: #fce7f3; color: #9d174d; }
+  .btn { display: block; width: 100%; padding: 11px; background: #003366; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; text-align: center; margin-top: 4px; transition: background 0.15s; }
+  .btn:hover { background: #00254d; }
+  .btn-secondary { background: #fff; color: #003366; border: 1.5px solid #003366; margin-top: 8px; }
+  .btn-secondary:hover { background: #f0f4f8; }
+  .disclaimer { font-size: 11px; color: #999; text-align: center; margin-top: 1rem; line-height: 1.6; }
+  .admin-toggle { font-size: 12px; color: #003366; cursor: pointer; text-decoration: underline; margin-bottom: 0.5rem; display: inline-block; }
+  .admin-panel { display: none; }
+  .admin-panel.open { display: block; }
+  .rate-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  .rate-table th { background: #f0f4f8; padding: 6px 8px; text-align: left; font-weight: 600; color: #555; border-bottom: 1px solid #e0e3e8; }
+  .rate-table td { padding: 5px 8px; border-bottom: 1px solid #f0f0f0; color: #333; }
+  .rate-table input { padding: 3px 5px; border: 1px solid #d0d5dd; border-radius: 4px; width: 70px; font-size: 12px; }
+  .rate-table .dest-label { font-weight: 600; color: #003366; }
+  .save-btn { margin-top: 8px; padding: 6px 16px; background: #003366; color: #fff; border: none; border-radius: 5px; font-size: 12px; cursor: pointer; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .btn, .admin-toggle, .admin-panel, .no-print { display: none !important; }
+    .card { border: 1px solid #ccc; box-shadow: none; }
+  }
+  @media (max-width: 520px) {
+    .grid2, .grid3, .meta-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="logo-row">
+      <div class="logo-box">FRACHT GROUP</div>
+    </div>
+    <h1>MIA – LATAM Airfreight Quoter</h1>
+    <div class="subtitle">Origin: Miami (MIA) &nbsp;·&nbsp; Spot rates +300 kg &nbsp;·&nbsp; All-in &nbsp;·&nbsp; <span id="rate-date">Rates: 02/12/2026</span></div>
+  </header>
+
+  <!-- ADMIN PANEL -->
+  <div class="no-print">
+    <span class="admin-toggle" onclick="toggleAdmin()">⚙ Manage rates & settings</span>
+    <div class="admin-panel" id="admin-panel">
+      <div class="card">
+        <div class="section-label">Rate table — edit buy rates (all-in USD/kg)</div>
+        <table class="rate-table" id="rate-edit-table"></table>
+        <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
+          <div style="flex:1;">
+            <label>Rate validity date</label>
+            <input type="date" id="validity-date" onchange="updateValidity()" />
+          </div>
+          <div style="flex:1;">
+            <label>Handling fee MIA (USD fixed)</label>
+            <input type="number" id="handling-mia" value="45" min="0" oninput="calc()" />
+          </div>
+          <div style="flex:1;">
+            <label>Origin docs per piece (USD)</label>
+            <input type="number" id="docs-per-piece" value="8" min="0" oninput="calc()" />
+          </div>
+        </div>
+        <button class="save-btn" onclick="saveRates()">Save rates</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SHIPMENT INPUTS -->
+  <div class="card">
+    <div class="section-label">Shipment details</div>
+    <div class="grid2">
+      <div>
+        <label>Destination</label>
+        <select id="dest" onchange="calc()"></select>
+      </div>
+      <div>
+        <label>Commodity type</label>
+        <select id="commodity" onchange="calc()">
+          <option value="general">General cargo</option>
+          <option value="perishable">Perishables / reefer</option>
+          <option value="dg">Dangerous goods (DG)</option>
+          <option value="pharma">Pharma / temp-controlled</option>
+        </select>
+      </div>
+    </div>
+    <div class="grid3">
+      <div>
+        <label>Chargeable weight (kg)</label>
+        <input type="number" id="weight" value="500" min="1" oninput="calc()" />
+      </div>
+      <div>
+        <label>No. of pieces</label>
+        <input type="number" id="pieces" value="5" min="1" oninput="calc()" />
+      </div>
+      <div>
+        <label>Margin target (%)</label>
+        <input type="number" id="margin" value="20" min="0" max="100" oninput="calc()" />
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div class="card">
+    <div class="section-label">Cost breakdown</div>
+    <div id="breakdown"></div>
+    <div class="total-row">
+      <span class="total-label">Sell rate (total)</span>
+      <span><span class="total-val" id="total-sell">—</span><span class="badge" id="gp-badge"></span></span>
+    </div>
+    <div class="meta-grid">
+      <div class="meta-item"><div class="meta-lbl">Rate / kg</div><div class="meta-val" id="rate-kg">—</div></div>
+      <div class="meta-item"><div class="meta-lbl">GP (USD)</div><div class="meta-val" id="gp-usd">—</div></div>
+      <div class="meta-item"><div class="meta-lbl">Carrier</div><div class="meta-val" id="carrier-out">—</div></div>
+      <div class="meta-item"><div class="meta-lbl">Aircraft</div><div class="meta-val" id="aircraft-out">—</div></div>
+    </div>
+    <div class="note-box" id="note-text"></div>
+  </div>
+
+  <!-- ACTIONS -->
+  <button class="btn no-print" onclick="window.print()">Print / Save as PDF</button>
+  <button class="btn btn-secondary no-print" onclick="copyQuote()">Copy quote summary</button>
+
+  <div class="disclaimer">
+    Rates are indicative and subject to space confirmation, carrier approval, and fuel surcharge fluctuation.<br>
+    Valid for 14 days from date of issue. For internal use — confirm with commercial team before sending to customer.
+  </div>
+</div>
+
+<script>
+let rateTable = [
+  { key:"EZE_PAX", label:"EZE – Buenos Aires (LATAM PAX)", buy:2.70, carrier:"LATAM", aircraft:"PAX", country:"Argentina", city:"Ezeiza", note:"Spot +300 kg. PAX belly." },
+  { key:"EZE_CAO", label:"EZE – Buenos Aires (LATAM CAO)", buy:2.97, carrier:"LATAM", aircraft:"CAO", country:"Argentina", city:"Ezeiza", note:"Spot +300 kg. Freighter." },
+  { key:"EZE_AV",  label:"EZE – Buenos Aires (Avianca CAO)", buy:2.30, carrier:"Avianca", aircraft:"CAO", country:"Argentina", city:"Buenos Aires", note:"Avianca NEC rate. Competitive vs LATAM." },
+  { key:"GRU_PAX", label:"GRU – São Paulo (LATAM PAX)", buy:2.10, carrier:"LATAM", aircraft:"PAX", country:"Brazil", city:"Guarulhos", note:"Spot +300 kg. PAX belly." },
+  { key:"GRU_CAO", label:"GRU – São Paulo (LATAM CAO)", buy:2.88, carrier:"LATAM", aircraft:"CAO", country:"Brazil", city:"Guarulhos", note:"Spot +300 kg. Freighter." },
+  { key:"VCP",     label:"VCP – Viracopos (LATAM CAO)", buy:2.57, carrier:"LATAM", aircraft:"CAO", country:"Brazil", city:"Viracopos", note:"Spot +300 kg." },
+  { key:"CWB",     label:"CWB – Curitiba (LATAM CAO)", buy:3.17, carrier:"LATAM", aircraft:"CAO", country:"Brazil", city:"Curitiba", note:"Spot +300 kg." },
+  { key:"FLN",     label:"FLN – Florianópolis (LATAM CAO)", buy:3.17, carrier:"LATAM", aircraft:"CAO", country:"Brazil", city:"Florianópolis", note:"Spot +300 kg." },
+  { key:"GIG",     label:"GIG – Rio de Janeiro (LATAM CAO)", buy:3.68, carrier:"LATAM", aircraft:"CAO", country:"Brazil", city:"Rio de Janeiro", note:"Spot +300 kg." },
+  { key:"SSA",     label:"SSA – Salvador (LATAM CAO, via VCP truck)", buy:5.37, carrier:"LATAM", aircraft:"CAO", country:"Brazil", city:"Salvador", note:"Via VCP by truck — confirm with customer before quoting." },
+  { key:"MDE",     label:"MDE – Medellín (LATAM CAO)", buy:0.97, carrier:"LATAM", aircraft:"CAO", country:"Colombia", city:"Medellín", note:"Very competitive buy rate. Good margin lane." },
+  { key:"BAQ",     label:"BAQ – Barranquilla (LATAM CAO)", buy:1.47, carrier:"LATAM", aircraft:"CAO", country:"Colombia", city:"Barranquilla", note:"Spot +300 kg." },
+  { key:"LIM_PAX", label:"LIM – Lima (LATAM PAX)", buy:1.05, carrier:"LATAM", aircraft:"PAX", country:"Peru", city:"Lima", note:"Medium haul FSC ($0.15/kg included). Competitive lane." },
+  { key:"LIM_CAO", label:"LIM – Lima (LATAM CAO)", buy:1.53, carrier:"LATAM", aircraft:"CAO", country:"Peru", city:"Lima", note:"Medium haul FSC included." },
+  { key:"SJO",     label:"SJO – San José, Costa Rica (LATAM CAO)", buy:1.47, carrier:"LATAM", aircraft:"CAO", country:"Costa Rica", city:"San José", note:"Spot +300 kg." },
+  { key:"GUA",     label:"GUA – Guatemala City (LATAM CAO)", buy:1.47, carrier:"LATAM", aircraft:"CAO", country:"Guatemala", city:"Guatemala City", note:"Spot +300 kg." },
+  { key:"GEO",     label:"GEO – Georgetown, Guyana (LATAM CAO)", buy:2.37, carrier:"LATAM", aircraft:"CAO", country:"Guyana", city:"Georgetown", note:"Spot +300 kg." }
+];
+
+const commSurcharge = {
+  general:    { handling: 0, label: "General — no surcharge" },
+  perishable: { handling: 80, label: "Perishable handling" },
+  dg:         { handling: 130, label: "DG acceptance fee" },
+  pharma:     { handling: 160, label: "Pharma handling" }
+};
+
+function fmt(n) { return '$' + Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtKg(n) { return '$' + Number(n).toFixed(3) + '/kg'; }
+
+function buildDestSelect() {
+  const sel = document.getElementById('dest');
+  sel.innerHTML = rateTable.map(r => `<option value="${r.key}">${r.label}</option>`).join('');
+}
+
+function buildAdminTable() {
+  const tbl = document.getElementById('rate-edit-table');
+  tbl.innerHTML = `<tr><th>Route</th><th>Carrier</th><th>Aircraft</th><th>Buy rate (all-in $/kg)</th></tr>` +
+    rateTable.map((r,i) => `
+      <tr>
+        <td class="dest-label">${r.key}</td>
+        <td>${r.carrier}</td>
+        <td><span class="tag ${r.aircraft==='PAX'?'tag-pax':'tag-cao'}">${r.aircraft}</span></td>
+        <td><input type="number" step="0.01" value="${r.buy}" id="rate_${i}" /></td>
+      </tr>`).join('');
+}
+
+function saveRates() {
+  rateTable.forEach((r,i) => {
+    const v = parseFloat(document.getElementById('rate_'+i).value);
+    if (!isNaN(v)) r.buy = v;
+  });
+  calc();
+  alert('Rates updated.');
+}
+
+function updateValidity() {
+  const d = document.getElementById('validity-date').value;
+  if (d) document.getElementById('rate-date').textContent = 'Rates: ' + d;
+}
+
+function toggleAdmin() {
+  const p = document.getElementById('admin-panel');
+  p.classList.toggle('open');
+}
+
+function calc() {
+  const key = document.getElementById('dest').value;
+  const weight = parseFloat(document.getElementById('weight').value) || 0;
+  const pieces = parseInt(document.getElementById('pieces').value) || 1;
+  const marginPct = parseFloat(document.getElementById('margin').value) || 20;
+  const comm = document.getElementById('commodity').value;
+  const mclFee = parseFloat(document.getElementById('handling-mia')?.value) || 45;
+  const docFee = parseFloat(document.getElementById('docs-per-piece')?.value) || 8;
+
+  const r = rateTable.find(x => x.key === key);
+  const c = commSurcharge[comm];
+  if (!r) return;
+
+  const airCost = r.buy * weight;
+  const handlingCost = mclFee;
+  const originCost = docFee * pieces;
+  const commFee = c.handling;
+  const totalCost = airCost + handlingCost + originCost + commFee;
+  const sellTotal = totalCost / (1 - marginPct / 100);
+  const gp = sellTotal - totalCost;
+  const ratePerKg = weight > 0 ? sellTotal / weight : 0;
+
+  const acTag = `<span class="tag ${r.aircraft==='PAX'?'tag-pax':'tag-cao'}">${r.aircraft}</span>`;
+
+  document.getElementById('breakdown').innerHTML = `
+    <div class="result-row"><span class="rl">Air freight buy (${r.buy.toFixed(3)}/kg × ${weight} kg) ${acTag}</span><span class="rv">${fmt(airCost)}</span></div>
+    ${commFee > 0 ? `<div class="result-row"><span class="rl">${c.label}</span><span class="rv">${fmt(commFee)}</span></div>` : ''}
+    <div class="result-row"><span class="rl">MCL handling — MIA</span><span class="rv">${fmt(handlingCost)}</span></div>
+    <div class="result-row"><span class="rl">Origin docs (${pieces} pc × $${docFee})</span><span class="rv">${fmt(originCost)}</span></div>
+    <div class="result-row" style="font-weight:600;"><span class="rl">Total cost</span><span class="rv">${fmt(totalCost)}</span></div>
+  `;
+
+  document.getElementById('total-sell').textContent = fmt(sellTotal);
+  document.getElementById('rate-kg').textContent = fmtKg(ratePerKg);
+  document.getElementById('gp-usd').textContent = fmt(gp);
+  document.getElementById('carrier-out').textContent = r.carrier;
+  document.getElementById('aircraft-out').textContent = r.aircraft;
+
+  const badge = document.getElementById('gp-badge');
+  badge.textContent = marginPct.toFixed(0) + '% GP';
+  badge.className = 'badge ' + (marginPct >= 20 ? 'badge-ok' : marginPct >= 12 ? 'badge-warn' : 'badge-bad');
+
+  document.getElementById('note-text').textContent = r.note + ' · ' + r.city + ', ' + r.country;
+}
+
+function copyQuote() {
+  const dest = document.getElementById('dest');
+  const destLabel = dest.options[dest.selectedIndex].text;
+  const weight = document.getElementById('weight').value;
+  const sell = document.getElementById('total-sell').textContent;
+  const rkg = document.getElementById('rate-kg').textContent;
+  const carrier = document.getElementById('carrier-out').textContent;
+  const gp = document.getElementById('gp-usd').textContent;
+  const margin = document.getElementById('margin').value;
+  const rateDate = document.getElementById('rate-date').textContent;
+
+  const text = `FRACHT GROUP — MIA Airfreight Quote\n` +
+    `Route: MIA → ${destLabel}\n` +
+    `Weight: ${weight} kg\n` +
+    `Carrier: ${carrier}\n` +
+    `Sell rate (total): ${sell}\n` +
+    `Rate per kg: ${rkg}\n` +
+    `GP: ${gp} (${margin}%)\n` +
+    `${rateDate}\n` +
+    `Indicative — subject to space confirmation and FSC fluctuation. Valid 14 days.`;
+
+  navigator.clipboard.writeText(text).then(() => alert('Quote copied to clipboard.')).catch(() => alert('Copy failed — please copy manually.'));
+}
+
+buildDestSelect();
+buildAdminTable();
+calc();
+</script>
+</body>
+</html>
