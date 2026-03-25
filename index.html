@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>MIA–LATAM Airfreight Quoter</title>
+<title>MIA–LATAM Airfreight Quoter v2</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f5f7; color: #1a1a2e; min-height: 100vh; padding: 2rem 1rem; }
@@ -16,7 +16,8 @@
   .card { background: #fff; border-radius: 10px; border: 1px solid #e0e3e8; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
   .section-label { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 0.85rem; }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .grid4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 14px; }
   label { font-size: 12px; color: #555; display: block; margin-bottom: 4px; font-weight: 500; }
   select, input[type=number], input[type=text], input[type=date] {
     width: 100%; padding: 8px 10px; border: 1px solid #d0d5dd; border-radius: 6px;
@@ -24,10 +25,25 @@
     transition: border-color 0.15s;
   }
   select:focus, input:focus { border-color: #003366; }
+
+  /* FSC highlight box */
+  .fsc-box { background: #eff6ff; border: 1.5px solid #3b82f6; border-radius: 8px; padding: 10px 14px; margin-bottom: 14px; }
+  .fsc-box .fsc-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .fsc-box .fsc-title { font-size: 11px; font-weight: 700; color: #1e40af; text-transform: uppercase; letter-spacing: 0.07em; }
+  .fsc-box .fsc-total { font-size: 12px; font-weight: 600; color: #1e40af; }
+  .fsc-box .fsc-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; align-items: end; }
+  .fsc-box label { color: #1e40af; }
+  .fsc-box input { border-color: #93c5fd; background: #fff; }
+  .fsc-box input:focus { border-color: #1d4ed8; }
+  .fsc-badge { display: inline-block; font-size: 10px; font-weight: 700; background: #dbeafe; color: #1e40af; padding: 2px 7px; border-radius: 4px; margin-left: 6px; }
+  .fsc-note { font-size: 11px; color: #3b82f6; margin-top: 6px; }
+
   .result-row { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
   .result-row:last-child { border-bottom: none; }
+  .result-row.fsc-line { background: #eff6ff; margin: 0 -4px; padding: 6px 4px; border-radius: 4px; }
   .rl { color: #666; }
   .rv { font-weight: 600; color: #1a1a2e; }
+  .rv-blue { font-weight: 600; color: #1e40af; }
   .total-row { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; padding-top: 14px; border-top: 2px solid #003366; }
   .total-label { font-size: 15px; font-weight: 600; color: #003366; }
   .total-val { font-size: 26px; font-weight: 700; color: #003366; }
@@ -63,105 +79,135 @@
     .card { border: 1px solid #ccc; box-shadow: none; }
   }
   @media (max-width: 520px) {
-    .grid2, .grid3, .meta-grid { grid-template-columns: 1fr 1fr; }
+    .grid2, .grid3, .grid4, .meta-grid { grid-template-columns: 1fr 1fr; }
+    .fsc-box .fsc-grid { grid-template-columns: 1fr 1fr; }
   }
 </style>
 </head>
 <body>
 <div class="container">
-  <header>
-    <div class="logo-row">
-      <div class="logo-box">FRACHT GROUP</div>
-    </div>
-    <h1>MIA – LATAM Airfreight Quoter</h1>
-    <div class="subtitle">Origin: Miami (MIA) &nbsp;·&nbsp; Spot rates +300 kg &nbsp;·&nbsp; All-in &nbsp;·&nbsp; <span id="rate-date">Rates: 02/12/2026</span></div>
-  </header>
+<header>
+  <div class="logo-row">
+    <div class="logo-box">FRACHT GROUP</div>
+  </div>
+  <h1>MIA – LATAM Airfreight Quoter <span style="font-size:13px;font-weight:400;color:#888;">v2</span></h1>
+  <div class="subtitle">Origin: Miami (MIA) &nbsp;·&nbsp; Spot rates +300 kg &nbsp;·&nbsp; All-in &nbsp;·&nbsp; <span id="rate-date">Rates: 02/12/2026</span></div>
+</header>
 
-  <!-- ADMIN PANEL -->
-  <div class="no-print">
-    <span class="admin-toggle" onclick="toggleAdmin()">⚙ Manage rates & settings</span>
-    <div class="admin-panel" id="admin-panel">
-      <div class="card">
-        <div class="section-label">Rate table — edit buy rates (all-in USD/kg)</div>
-        <table class="rate-table" id="rate-edit-table"></table>
-        <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
-          <div style="flex:1;">
-            <label>Rate validity date</label>
-            <input type="date" id="validity-date" onchange="updateValidity()" />
-          </div>
-          <div style="flex:1;">
-            <label>Handling fee MIA (USD fixed)</label>
-            <input type="number" id="handling-mia" value="45" min="0" oninput="calc()" />
-          </div>
-          <div style="flex:1;">
-            <label>Origin docs per piece (USD)</label>
-            <input type="number" id="docs-per-piece" value="8" min="0" oninput="calc()" />
-          </div>
+<!-- ADMIN PANEL -->
+<div class="no-print">
+  <span class="admin-toggle" onclick="toggleAdmin()">⚙ Manage rates & settings</span>
+  <div class="admin-panel" id="admin-panel">
+    <div class="card">
+      <div class="section-label">Rate table — edit buy rates (all-in USD/kg, excl. FSC)</div>
+      <table class="rate-table" id="rate-edit-table"></table>
+      <div style="margin-top:10px; display:flex; gap:10px; align-items:center;">
+        <div style="flex:1;">
+          <label>Rate validity date</label>
+          <input type="date" id="validity-date" onchange="updateValidity()" />
         </div>
-        <button class="save-btn" onclick="saveRates()">Save rates</button>
+        <div style="flex:1;">
+          <label>Handling fee MIA (USD fixed)</label>
+          <input type="number" id="handling-mia" value="45" min="0" oninput="calc()" />
+        </div>
+        <div style="flex:1;">
+          <label>Origin docs per piece (USD)</label>
+          <input type="number" id="docs-per-piece" value="8" min="0" oninput="calc()" />
+        </div>
       </div>
+      <button class="save-btn" onclick="saveRates()">Save rates</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHIPMENT INPUTS -->
+<div class="card">
+  <div class="section-label">Shipment details</div>
+  <div class="grid2">
+    <div>
+      <label>Destination</label>
+      <select id="dest" onchange="calc()"></select>
+    </div>
+    <div>
+      <label>Commodity type</label>
+      <select id="commodity" onchange="calc()">
+        <option value="general">General cargo</option>
+        <option value="perishable">Perishables / reefer</option>
+        <option value="dg">Dangerous goods (DG)</option>
+        <option value="pharma">Pharma / temp-controlled</option>
+      </select>
+    </div>
+  </div>
+  <div class="grid3">
+    <div>
+      <label>Chargeable weight (kg)</label>
+      <input type="number" id="weight" value="500" min="1" oninput="calc()" />
+    </div>
+    <div>
+      <label>No. of pieces</label>
+      <input type="number" id="pieces" value="5" min="1" oninput="calc()" />
+    </div>
+    <div>
+      <label>Margin target (%)</label>
+      <input type="number" id="margin" value="20" min="0" max="100" oninput="calc()" />
     </div>
   </div>
 
-  <!-- SHIPMENT INPUTS -->
-  <div class="card">
-    <div class="section-label">Shipment details</div>
-    <div class="grid2">
+  <!-- FSC SECTION -->
+  <div class="fsc-box">
+    <div class="fsc-header">
+      <span class="fsc-title">⛽ Fuel Surcharge (FSC) <span class="fsc-badge">LIVE</span></span>
+      <span class="fsc-total" id="fsc-total-display">FSC cost: —</span>
+    </div>
+    <div class="fsc-grid">
       <div>
-        <label>Destination</label>
-        <select id="dest" onchange="calc()"></select>
+        <label>FSC rate (USD/kg)</label>
+        <input type="number" id="fsc-rate" value="0.18" min="0" step="0.01" oninput="calc()" />
       </div>
       <div>
-        <label>Commodity type</label>
-        <select id="commodity" onchange="calc()">
-          <option value="general">General cargo</option>
-          <option value="perishable">Perishables / reefer</option>
-          <option value="dg">Dangerous goods (DG)</option>
-          <option value="pharma">Pharma / temp-controlled</option>
+        <label>Apply FSC to sell?</label>
+        <select id="fsc-passthrough" onchange="calc()">
+          <option value="passthrough">Pass through to customer</option>
+          <option value="absorbed">Absorb in margin</option>
         </select>
       </div>
-    </div>
-    <div class="grid3">
-      <div>
-        <label>Chargeable weight (kg)</label>
-        <input type="number" id="weight" value="500" min="1" oninput="calc()" />
-      </div>
-      <div>
-        <label>No. of pieces</label>
-        <input type="number" id="pieces" value="5" min="1" oninput="calc()" />
-      </div>
-      <div>
-        <label>Margin target (%)</label>
-        <input type="number" id="margin" value="20" min="0" max="100" oninput="calc()" />
+      <div style="display:flex; align-items:flex-end;">
+        <div style="width:100%;">
+          <label>FSC last updated</label>
+          <input type="date" id="fsc-date" oninput="updateFscDate()" />
+        </div>
       </div>
     </div>
+    <div class="fsc-note" id="fsc-note">FSC is passed through to customer and shown separately in the breakdown.</div>
   </div>
+</div>
 
-  <!-- RESULTS -->
-  <div class="card">
-    <div class="section-label">Cost breakdown</div>
-    <div id="breakdown"></div>
-    <div class="total-row">
-      <span class="total-label">Sell rate (total)</span>
-      <span><span class="total-val" id="total-sell">—</span><span class="badge" id="gp-badge"></span></span>
-    </div>
-    <div class="meta-grid">
-      <div class="meta-item"><div class="meta-lbl">Rate / kg</div><div class="meta-val" id="rate-kg">—</div></div>
-      <div class="meta-item"><div class="meta-lbl">GP (USD)</div><div class="meta-val" id="gp-usd">—</div></div>
-      <div class="meta-item"><div class="meta-lbl">Carrier</div><div class="meta-val" id="carrier-out">—</div></div>
-      <div class="meta-item"><div class="meta-lbl">Aircraft</div><div class="meta-val" id="aircraft-out">—</div></div>
-    </div>
-    <div class="note-box" id="note-text"></div>
+<!-- RESULTS -->
+<div class="card">
+  <div class="section-label">Cost breakdown</div>
+  <div id="breakdown"></div>
+  <div class="total-row">
+    <span class="total-label">Sell rate (total)</span>
+    <span><span class="total-val" id="total-sell">—</span><span class="badge" id="gp-badge"></span></span>
   </div>
-
-  <!-- ACTIONS -->
-  <button class="btn no-print" onclick="window.print()">Print / Save as PDF</button>
-  <button class="btn btn-secondary no-print" onclick="copyQuote()">Copy quote summary</button>
-
-  <div class="disclaimer">
-    Rates are indicative and subject to space confirmation, carrier approval, and fuel surcharge fluctuation.<br>
-    Valid for 14 days from date of issue. For internal use — confirm with commercial team before sending to customer.
+  <div class="meta-grid">
+    <div class="meta-item"><div class="meta-lbl">Rate / kg</div><div class="meta-val" id="rate-kg">—</div></div>
+    <div class="meta-item"><div class="meta-lbl">GP (USD)</div><div class="meta-val" id="gp-usd">—</div></div>
+    <div class="meta-item"><div class="meta-lbl">Carrier</div><div class="meta-val" id="carrier-out">—</div></div>
+    <div class="meta-item"><div class="meta-lbl">Aircraft</div><div class="meta-val" id="aircraft-out">—</div></div>
   </div>
+  <div class="note-box" id="note-text"></div>
+</div>
+
+<!-- ACTIONS -->
+<button class="btn no-print" onclick="window.print()">Print / Save as PDF</button>
+<button class="btn btn-secondary no-print" onclick="copyQuote()">Copy quote summary</button>
+
+<div class="disclaimer">
+  Rates are indicative and subject to space confirmation, carrier approval, and fuel surcharge fluctuation.<br>
+  Valid for 14 days from date of issue. FSC shown is current as of the date indicated — verify weekly.<br>
+  For internal use — confirm with commercial team before sending to customer.
+</div>
 </div>
 
 <script>
@@ -178,19 +224,25 @@ let rateTable = [
   { key:"SSA",     label:"SSA – Salvador (LATAM CAO, via VCP truck)", buy:5.37, carrier:"LATAM", aircraft:"CAO", country:"Brazil", city:"Salvador", note:"Via VCP by truck — confirm with customer before quoting." },
   { key:"MDE",     label:"MDE – Medellín (LATAM CAO)", buy:0.97, carrier:"LATAM", aircraft:"CAO", country:"Colombia", city:"Medellín", note:"Very competitive buy rate. Good margin lane." },
   { key:"BAQ",     label:"BAQ – Barranquilla (LATAM CAO)", buy:1.47, carrier:"LATAM", aircraft:"CAO", country:"Colombia", city:"Barranquilla", note:"Spot +300 kg." },
-  { key:"LIM_PAX", label:"LIM – Lima (LATAM PAX)", buy:1.05, carrier:"LATAM", aircraft:"PAX", country:"Peru", city:"Lima", note:"Medium haul FSC ($0.15/kg included). Competitive lane." },
-  { key:"LIM_CAO", label:"LIM – Lima (LATAM CAO)", buy:1.53, carrier:"LATAM", aircraft:"CAO", country:"Peru", city:"Lima", note:"Medium haul FSC included." },
+  { key:"LIM_PAX", label:"LIM – Lima (LATAM PAX)", buy:1.05, carrier:"LATAM", aircraft:"PAX", country:"Peru", city:"Lima", note:"Medium haul FSC ($0.15/kg included in buy). Competitive lane." },
+  { key:"LIM_CAO", label:"LIM – Lima (LATAM CAO)", buy:1.53, carrier:"LATAM", aircraft:"CAO", country:"Peru", city:"Lima", note:"Medium haul FSC included in buy rate." },
   { key:"SJO",     label:"SJO – San José, Costa Rica (LATAM CAO)", buy:1.47, carrier:"LATAM", aircraft:"CAO", country:"Costa Rica", city:"San José", note:"Spot +300 kg." },
   { key:"GUA",     label:"GUA – Guatemala City (LATAM CAO)", buy:1.47, carrier:"LATAM", aircraft:"CAO", country:"Guatemala", city:"Guatemala City", note:"Spot +300 kg." },
   { key:"GEO",     label:"GEO – Georgetown, Guyana (LATAM CAO)", buy:2.37, carrier:"LATAM", aircraft:"CAO", country:"Guyana", city:"Georgetown", note:"Spot +300 kg." }
 ];
 
 const commSurcharge = {
-  general:    { handling: 0, label: "General — no surcharge" },
-  perishable: { handling: 80, label: "Perishable handling" },
+  general:    { handling: 0,   label: "General — no surcharge" },
+  perishable: { handling: 80,  label: "Perishable handling" },
   dg:         { handling: 130, label: "DG acceptance fee" },
   pharma:     { handling: 160, label: "Pharma handling" }
 };
+
+// Set today as default FSC date
+(function() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('fsc-date').value = today;
+})();
 
 function fmt(n) { return '$' + Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function fmtKg(n) { return '$' + Number(n).toFixed(3) + '/kg'; }
@@ -202,14 +254,14 @@ function buildDestSelect() {
 
 function buildAdminTable() {
   const tbl = document.getElementById('rate-edit-table');
-  tbl.innerHTML = `<tr><th>Route</th><th>Carrier</th><th>Aircraft</th><th>Buy rate (all-in $/kg)</th></tr>` +
+  tbl.innerHTML = `<tr><th>Route</th><th>Carrier</th><th>Aircraft</th><th>Buy rate ($/kg, excl. FSC)</th></tr>` +
     rateTable.map((r,i) => `
-      <tr>
-        <td class="dest-label">${r.key}</td>
-        <td>${r.carrier}</td>
-        <td><span class="tag ${r.aircraft==='PAX'?'tag-pax':'tag-cao'}">${r.aircraft}</span></td>
-        <td><input type="number" step="0.01" value="${r.buy}" id="rate_${i}" /></td>
-      </tr>`).join('');
+    <tr>
+      <td class="dest-label">${r.key}</td>
+      <td>${r.carrier}</td>
+      <td><span class="tag ${r.aircraft==='PAX'?'tag-pax':'tag-cao'}">${r.aircraft}</span></td>
+      <td><input type="number" step="0.01" value="${r.buy}" id="rate_${i}" /></td>
+    </tr>`).join('');
 }
 
 function saveRates() {
@@ -226,6 +278,11 @@ function updateValidity() {
   if (d) document.getElementById('rate-date').textContent = 'Rates: ' + d;
 }
 
+function updateFscDate() {
+  // Just triggers a recalc — date is read in copyQuote
+  calc();
+}
+
 function toggleAdmin() {
   const p = document.getElementById('admin-panel');
   p.classList.toggle('open');
@@ -239,28 +296,44 @@ function calc() {
   const comm = document.getElementById('commodity').value;
   const mclFee = parseFloat(document.getElementById('handling-mia')?.value) || 45;
   const docFee = parseFloat(document.getElementById('docs-per-piece')?.value) || 8;
+  const fscRate = parseFloat(document.getElementById('fsc-rate').value) || 0;
+  const fscPassthrough = document.getElementById('fsc-passthrough').value;
 
   const r = rateTable.find(x => x.key === key);
   const c = commSurcharge[comm];
   if (!r) return;
 
   const airCost = r.buy * weight;
+  const fscCost = fscRate * weight;
   const handlingCost = mclFee;
   const originCost = docFee * pieces;
   const commFee = c.handling;
-  const totalCost = airCost + handlingCost + originCost + commFee;
-  const sellTotal = totalCost / (1 - marginPct / 100);
-  const gp = sellTotal - totalCost;
+
+  // FSC logic: if absorbed, it's part of cost base for margin calc
+  // if passthrough, it's added on top of the margin-applied sell price
+  const costBase = airCost + handlingCost + originCost + commFee + (fscPassthrough === 'absorbed' ? fscCost : 0);
+  const sellBeforeFsc = costBase / (1 - marginPct / 100);
+  const sellTotal = fscPassthrough === 'passthrough' ? sellBeforeFsc + fscCost : sellBeforeFsc;
+
+  const gp = sellBeforeFsc - costBase; // GP is always on the margin base, not FSC passthrough
   const ratePerKg = weight > 0 ? sellTotal / weight : 0;
 
   const acTag = `<span class="tag ${r.aircraft==='PAX'?'tag-pax':'tag-cao'}">${r.aircraft}</span>`;
 
+  // Update FSC display
+  document.getElementById('fsc-total-display').textContent = `FSC cost: ${fmt(fscCost)}`;
+  document.getElementById('fsc-note').textContent = fscPassthrough === 'passthrough'
+    ? `FSC of $${fscRate.toFixed(2)}/kg is passed through to customer and shown as a separate line. Not included in margin base.`
+    : `FSC of $${fscRate.toFixed(2)}/kg is absorbed into cost base — margin applied over total cost including FSC.`;
+
   document.getElementById('breakdown').innerHTML = `
     <div class="result-row"><span class="rl">Air freight buy (${r.buy.toFixed(3)}/kg × ${weight} kg) ${acTag}</span><span class="rv">${fmt(airCost)}</span></div>
+    <div class="result-row fsc-line"><span class="rl">⛽ Fuel surcharge — FSC ($${fscRate.toFixed(2)}/kg × ${weight} kg)</span><span class="rv-blue">${fmt(fscCost)}</span></div>
     ${commFee > 0 ? `<div class="result-row"><span class="rl">${c.label}</span><span class="rv">${fmt(commFee)}</span></div>` : ''}
     <div class="result-row"><span class="rl">MCL handling — MIA</span><span class="rv">${fmt(handlingCost)}</span></div>
     <div class="result-row"><span class="rl">Origin docs (${pieces} pc × $${docFee})</span><span class="rv">${fmt(originCost)}</span></div>
-    <div class="result-row" style="font-weight:600;"><span class="rl">Total cost</span><span class="rv">${fmt(totalCost)}</span></div>
+    <div class="result-row" style="font-weight:600;"><span class="rl">Total cost (incl. FSC)</span><span class="rv">${fmt(costBase + (fscPassthrough === 'passthrough' ? fscCost : 0))}</span></div>
+    ${fscPassthrough === 'passthrough' ? `<div class="result-row" style="font-size:11px;color:#888;"><span class="rl">↳ Margin base (excl. FSC passthrough)</span><span class="rv" style="color:#888;">${fmt(costBase)}</span></div>` : ''}
   `;
 
   document.getElementById('total-sell').textContent = fmt(sellTotal);
@@ -286,6 +359,9 @@ function copyQuote() {
   const gp = document.getElementById('gp-usd').textContent;
   const margin = document.getElementById('margin').value;
   const rateDate = document.getElementById('rate-date').textContent;
+  const fscRate = document.getElementById('fsc-rate').value;
+  const fscDate = document.getElementById('fsc-date').value || 'not specified';
+  const fscMode = document.getElementById('fsc-passthrough').value === 'passthrough' ? 'passed through' : 'absorbed in margin';
 
   const text = `FRACHT GROUP — MIA Airfreight Quote\n` +
     `Route: MIA → ${destLabel}\n` +
@@ -294,6 +370,7 @@ function copyQuote() {
     `Sell rate (total): ${sell}\n` +
     `Rate per kg: ${rkg}\n` +
     `GP: ${gp} (${margin}%)\n` +
+    `FSC: $${fscRate}/kg (${fscMode}, as of ${fscDate})\n` +
     `${rateDate}\n` +
     `Indicative — subject to space confirmation and FSC fluctuation. Valid 14 days.`;
 
